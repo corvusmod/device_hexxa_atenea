@@ -7,9 +7,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full.mk)
 PRODUCT_DEX_PREOPT_DEFAULT_FLAGS := --compiler-filter=interpret-only
 $(call add-product-dex-preopt-module-config,services,--compiler-filter=space)
 
-$(call inherit-product-if-exists, vendor/Xiaomi/HM2014011/HM2014011-vendor.mk)
+$(call inherit-product-if-exists, vendor/hexxa/atenea/atenea-vendor.mk)
 
-LOCAL_PATH := device/Xiaomi/HM2014011
+LOCAL_PATH := device/hexxa/atenea
 
 PRODUCT_CHARACTERISTICS := default
 
@@ -23,13 +23,13 @@ endif
 
 PRODUCT_TAGS += dalvik.gc.type-precise
 
-PRODUCT_PACKAGES += Torch
+#PRODUCT_PACKAGES += Torch
 
 PRODUCT_PACKAGES += \
     libxlog
 
 PRODUCT_PACKAGES += \
-    lights.mt6582
+    lights.mt6572
 
 # audio
 PRODUCT_PACKAGES += \
@@ -37,7 +37,7 @@ PRODUCT_PACKAGES += \
     audio.a2dp.default
 
 PRODUCT_PACKAGES += \
-    audio.primary.mt6582
+    audio.primary.mt6572
 
 PRODUCT_PACKAGES += \
     audio_policy.default
@@ -63,13 +63,13 @@ PRODUCT_PACKAGES += \
 # Rootdir
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/sbin/busybox:root/sbin/busybox \
-    $(LOCAL_PATH)/rootdir/fstab.mt6582:root/fstab.mt6582 \
-    $(LOCAL_PATH)/rootdir/init.recovery.mt6582.rc:root/init.recovery.mt6582.rc \
+    $(LOCAL_PATH)/rootdir/fstab.mt6572:root/fstab.mt6572 \
+    $(LOCAL_PATH)/rootdir/init.recovery.mt6572.rc:root/init.recovery.mt6572.rc \
     $(LOCAL_PATH)/rootdir/init.rc:root/init.rc \
-    $(LOCAL_PATH)/rootdir/init.mt6582.rc:root/init.mt6582.rc \
+    $(LOCAL_PATH)/rootdir/init.mt6572.rc:root/init.mt6572.rc \
     $(LOCAL_PATH)/rootdir/init.modem.rc:root/init.modem.rc \
-    $(LOCAL_PATH)/rootdir/ueventd.mt6582.rc:root/ueventd.mt6582.rc \
-    $(LOCAL_PATH)/rootdir/init.mt6582.usb.rc:root/init.mt6582.usb.rc \
+    $(LOCAL_PATH)/rootdir/ueventd.mt6572.rc:root/ueventd.mt6572.rc \
+    $(LOCAL_PATH)/rootdir/init.mt6572.usb.rc:root/init.mt6572.usb.rc \
     $(LOCAL_PATH)/rootdir/twrp.fstab:root/etc/twrp.fstab \
     $(LOCAL_KERNEL):kernel
 
@@ -111,7 +111,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PROPERTY_OVERRIDES := \
 	ro.mediatek.version.release=ALPS.W10.24.p0 \
-	ro.mediatek.platform=MT6582 \
+	ro.mediatek.platform=MT6572 \
 	ro.mediatek.chip_ver=S01 \
 	ro.mediatek.version.branch=KK1.MP1 \
 	ro.mediatek.version.sdk=2 \
@@ -123,11 +123,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	persist.service.debuggable=1 \
 	persist.mtk.wcn.combo.chipid=-1
 
-PRODUCT_NAME := full_HM2014011
-PRODUCT_DEVICE := HM2014011
+PRODUCT_NAME := full_atenea
+PRODUCT_DEVICE := atenea
 
 # Boot animation
-TARGET_SCREEN_HEIGHT := 1280
-TARGET_SCREEN_WIDTH := 720
+TARGET_SCREEN_HEIGHT := 360
+TARGET_SCREEN_WIDTH := 360
 
-$(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
+$(call inherit-product, frameworks/native/build/phone-hdpi-512-dalvik-heap.mk)

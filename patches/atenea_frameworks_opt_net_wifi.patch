@@ -1,0 +1,13 @@
+diff --git a/service/jni/com_android_server_wifi_WifiNative.cpp b/service/jni/com_android_server_wifi_WifiNative.cpp
+index d3fa451..ea4ccf8 100644
+--- a/service/jni/com_android_server_wifi_WifiNative.cpp
++++ b/service/jni/com_android_server_wifi_WifiNative.cpp
+@@ -115,7 +115,7 @@ static jstring doStringCommand(JNIEnv* env, jstring javaCommand) {
+ 
+ static jboolean android_net_wifi_setMode(JNIEnv* env, jobject, jint type)
+ {
+-    return (jboolean)(::wifi_set_mode(type) == 0);
++    return (jboolean)(true);
+ }
+ 
+ static jboolean android_net_wifi_isDriverLoaded(JNIEnv* env, jobject)

@@ -1,8 +1,8 @@
 #
-# system.prop for HM2014011
+# system.prop for atenea
 #
 service.adb.root=1
-ro.sf.lcd_density=320
+ro.sf.lcd_density=210
 wifi.interface=wlan0
 persist.mtk.aee.aed=on
 persist.radio.fd.counter=15
@@ -81,3 +81,14 @@ debug.hwui.render_dirty_regions=false
 persist.sys.timezone=Asia/Shanghai
 persist.sys.strictmode.visual=0
 persist.sys.strictmode.disable=1
+
+ro.mount.fs=EXT4
+
+#for Debugging
+ro.setupwizard.mode=DISABLED
+
+#SoftButtons
+qemu.hw.mainkeys=0
+
+#Debug
+persist.logd.logpersistd=logcatd

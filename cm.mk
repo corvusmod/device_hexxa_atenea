@@ -1,15 +1,18 @@
 # Release name
-PRODUCT_RELEASE_NAME := HM2014011
+PRODUCT_RELEASE_NAME := atenea
 
 # Inherit some common CM stuff.
 $(call inherit-product, vendor/cm/config/common_full_phone.mk)
 
 # Inherit device configuration
-$(call inherit-product, device/Xiaomi/HM2014011/device_HM2014011.mk)
+$(call inherit-product, device/hexxa/atenea/device_atenea.mk)
+
+TARGET_SCREEN_HEIGHT := 360
+TARGET_SCREEN_WIDTH := 360
 
 ## Device identifier. This must come after all inclusions
-PRODUCT_DEVICE := HM2014011
-PRODUCT_NAME := cm_HM2014011
-PRODUCT_BRAND := Xiaomi
-PRODUCT_MODEL := HM2014011
-PRODUCT_MANUFACTURER := Xiaomi
+PRODUCT_DEVICE := atenea
+PRODUCT_NAME := cm_atenea
+PRODUCT_BRAND := hexxa
+PRODUCT_MODEL := atenea
+PRODUCT_MANUFACTURER := hexxa

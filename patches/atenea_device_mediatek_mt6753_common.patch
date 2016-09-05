@@ -1,0 +1,57 @@
+diff --git a/Android.mk b/Android.mk
+index e69de29..78c99fa 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -0,0 +1,7 @@
++LOCAL_PATH := $(call my-dir)
++
++ifeq ($(TARGET_DEVICE),fenix)
++
++include $(call all-makefiles-under,$(LOCAL_PATH))
++
++endif
+diff --git a/MediaTek/lib_driver_cmd_mt66xx/Android.mk b/MediaTek/lib_driver_cmd_mt66xx/Android.mk
+index e7916e9..bc2f6b6 100644
+--- a/MediaTek/lib_driver_cmd_mt66xx/Android.mk
++++ b/MediaTek/lib_driver_cmd_mt66xx/Android.mk
+@@ -1,3 +1,4 @@
++ifeq ($(TARGET_BOARD_PLATFORM),mt6753)
+ LOCAL_PATH := $(call my-dir)
+ 
+ ##### For Google SUPPLICANT
+@@ -53,3 +54,4 @@ include $(BUILD_STATIC_LIBRARY)
+ ########################
+ 
+ endif
++endif
+diff --git a/MediaTek/libbt-vendor-mtk/Android.mk b/MediaTek/libbt-vendor-mtk/Android.mk
+index ec244e3..6f32561 100644
+--- a/MediaTek/libbt-vendor-mtk/Android.mk
++++ b/MediaTek/libbt-vendor-mtk/Android.mk
+@@ -11,6 +11,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
++ifeq ($(TARGET_BOARD_PLATFORM),mt6753)
+ 
+ ifneq ($(BOARD_HAVE_BLUETOOTH_MTK),)
+ 
+@@ -38,3 +39,4 @@ LOCAL_MODULE_TAGS := optional
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
++endif
+diff --git a/MediaTek/libxlog/Android.mk b/MediaTek/libxlog/Android.mk
+index 7c1f006..6e02f55 100644
+--- a/MediaTek/libxlog/Android.mk
++++ b/MediaTek/libxlog/Android.mk
+@@ -1,3 +1,4 @@
++ifeq ($(TARGET_BOARD_PLATFORM),mt6753)
+ LOCAL_PATH := $(my-dir)
+ 
+ include $(CLEAR_VARS)
+@@ -9,3 +10,4 @@ LOCAL_C_INCLUDES += system/core/include/
+ LOCAL_SHARED_LIBRARIES := libcutils liblog
+ 
+ include $(BUILD_SHARED_LIBRARY)
++endif
