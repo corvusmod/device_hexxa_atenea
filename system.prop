@@ -86,3 +86,6 @@ ro.mount.fs=EXT4
 
 #for Debugging
 ro.setupwizard.mode=DISABLED
+
+gsm.current.phone-type=1
+ro.telephony.default_network=9

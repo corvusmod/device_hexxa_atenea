@@ -64,13 +64,23 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/sbin/busybox:root/sbin/busybox \
     $(LOCAL_PATH)/rootdir/fstab.mt6572:root/fstab.mt6572 \
+    $(LOCAL_PATH)/rootdir/default.prop:root/default.prop \
     $(LOCAL_PATH)/rootdir/init.recovery.mt6572.rc:root/init.recovery.mt6572.rc \
     $(LOCAL_PATH)/rootdir/init.rc:root/init.rc \
     $(LOCAL_PATH)/rootdir/init.mt6572.rc:root/init.mt6572.rc \
+    $(LOCAL_PATH)/rootdir/factory_init.project.rc:root/factory_init.project.rc \
+    $(LOCAL_PATH)/rootdir/factory_init.rc:root/factory_init.rc \
+    $(LOCAL_PATH)/rootdir/init.aee.rc:root/init.aee.rc \
+    $(LOCAL_PATH)/rootdir/init.environ.rc:root/init.environ.rc \
+    $(LOCAL_PATH)/rootdir/init.fuse.rc:root/init.fuse.rc \
+    $(LOCAL_PATH)/rootdir/init.trace.rc:root/init.trace.rc \
+    $(LOCAL_PATH)/rootdir/init.charging.rc:root/init.charging.rc \
+    $(LOCAL_PATH)/rootdir/meta_init.modem.rc:root/meta_init.modem.rc \
+    $(LOCAL_PATH)/rootdir/meta_init.project.rc:root/meta_init.project.rc \
+    $(LOCAL_PATH)/rootdir/meta_init.rc:root/meta_init.rc \
     $(LOCAL_PATH)/rootdir/init.modem.rc:root/init.modem.rc \
     $(LOCAL_PATH)/rootdir/ueventd.mt6572.rc:root/ueventd.mt6572.rc \
     $(LOCAL_PATH)/rootdir/init.mt6572.usb.rc:root/init.mt6572.usb.rc \
-    $(LOCAL_PATH)/rootdir/twrp.fstab:root/etc/twrp.fstab \
     $(LOCAL_KERNEL):kernel
 
 # Permissions

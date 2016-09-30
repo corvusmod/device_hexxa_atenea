@@ -331,11 +331,13 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
     private Object
     responseCrssNotification(Parcel p) {
         /*SuppCrssNotification notification = new SuppCrssNotification();
+
         notification.code = p.readInt();
         notification.type = p.readInt();
         notification.number = p.readString();
         notification.alphaid = p.readString();
         notification.cli_validity = p.readInt();
+
         return notification;*/
 
         Rlog.e(RILJ_LOG_TAG, "NOT PROCESSING CRSS NOTIFICATION");
