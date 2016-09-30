@@ -7,9 +7,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full.mk)
 PRODUCT_DEX_PREOPT_DEFAULT_FLAGS := --compiler-filter=interpret-only
 $(call add-product-dex-preopt-module-config,services,--compiler-filter=space)
 
-$(call inherit-product-if-exists, vendor/hexxa/atenea/atenea-vendor.mk)
+$(call inherit-product-if-exists, vendor/elephone/Q/Q-vendor.mk)
 
-LOCAL_PATH := device/hexxa/atenea
+LOCAL_PATH := device/elephone/Q
 
 PRODUCT_CHARACTERISTICS := default
 
@@ -123,11 +123,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	persist.service.debuggable=1 \
 	persist.mtk.wcn.combo.chipid=-1
 
-PRODUCT_NAME := full_atenea
-PRODUCT_DEVICE := atenea
+PRODUCT_NAME := full_Q
+PRODUCT_DEVICE := Q
 
 # Boot animation
-TARGET_SCREEN_HEIGHT := 360
-TARGET_SCREEN_WIDTH := 360
+TARGET_SCREEN_HEIGHT := 432
+TARGET_SCREEN_WIDTH := 240
 
 $(call inherit-product, frameworks/native/build/phone-hdpi-512-dalvik-heap.mk)

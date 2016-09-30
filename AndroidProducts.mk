@@ -1,2 +1,2 @@
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/atenea.mk
+    $(LOCAL_DIR)/device_Q.mk

@@ -1,5 +1,5 @@
 # inherit from the proprietary version
--include vendor/hexxa/atenea/BoardConfigVendor.mk
+-include vendor/elephone/Q/BoardConfigVendor.mk
 
 # Board
 TARGET_BOARD_PLATFORM := mt6572
@@ -37,7 +37,7 @@ COMMON_GLOBAL_CFLAGS += -DMTK_HARDWARE -DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
 COMMON_GLOBAL_CPPFLAGS += -DMTK_HARDWARE
 
 # RIL
-BOARD_RIL_CLASS := ../../../device/hexxa/atenea/ril/
+BOARD_RIL_CLASS := ../../../device/elephone/Q/ril/
 
 BOARD_CONNECTIVITY_VENDOR := MediaTek
 BOARD_CONNECTIVITY_MODULE := conn_soc
@@ -66,12 +66,12 @@ BOARD_KERNEL_CMDLINE := androidboot.selinux=permissive selinux=0
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_MKBOOTIMG_ARGS := --base 0x40078000 --pagesize 2048 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --second_offset 0x00f00000 --tags_offset 0x00000100 --board v.s.160107
-TARGET_PREBUILT_KERNEL := device/hexxa/atenea/kernel
-BOARD_CUSTOM_BOOTIMG_MK := device/hexxa/atenea/MTKbootimg.mk
+TARGET_PREBUILT_KERNEL := device/elephone/Q/kernel
+BOARD_CUSTOM_BOOTIMG_MK := device/elephone/Q/MTKbootimg.mk
 BOARD_CUSTOM_BOOTIMG := true
 
 # Recovery
-TARGET_RECOVERY_FSTAB := device/hexxa/atenea/rootdir/recovery.fstab
+TARGET_RECOVERY_FSTAB := device/elephone/Q/rootdir/recovery.fstab
 
 TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file"
 
@@ -100,7 +100,7 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/virtual/android_usb/android0/f_
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_MTK := true
 BOARD_BLUETOOTH_DOES_NOT_USE_RFKILL := true
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/hexxa/atenea/bluetooth
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/elephone/Q/bluetooth
 
 # Healthd
 #HEALTHD_ENABLE_TRICOLOR_LED := true
@@ -109,13 +109,13 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/hexxa/atenea/bluetooth
 #BLUE_LED_PATH := /sys/class/leds/blue/brightness
 
 # EGL settings
-BOARD_EGL_CFG := device/hexxa/atenea/configs/egl.cfg
+BOARD_EGL_CFG := device/elephone/Q/configs/egl.cfg
 USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
 # Selinux
 BOARD_SEPOLICY_DIRS := \
-       device/hexxa/atenea/sepolicy
+       device/elephone/Q/sepolicy
 
 BOARD_SEPOLICY_UNION := \
        device.te \
@@ -136,7 +136,7 @@ WIFI_DRIVER_FW_PATH_AP:=AP
 WIFI_DRIVER_FW_PATH_P2P:=P2P
 
 # GPS
-TARGET_SPECIFIC_HEADER_PATH := device/hexxa/atenea/include
+TARGET_SPECIFIC_HEADER_PATH := device/elephone/Q/include
 
-LCM_HEIGHT=360
-LCM_WIDTH=360
+LCM_HEIGHT=432
+LCM_WIDTH=240

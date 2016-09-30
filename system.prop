@@ -86,9 +86,3 @@ ro.mount.fs=EXT4
 
 #for Debugging
 ro.setupwizard.mode=DISABLED
-
-#SoftButtons
-qemu.hw.mainkeys=0
-
-#Debug
-persist.logd.logpersistd=logcatd
