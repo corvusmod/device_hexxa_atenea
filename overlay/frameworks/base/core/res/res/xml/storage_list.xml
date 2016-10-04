@@ -38,14 +38,4 @@
 	     android:primary="true"
 	     android:removable="false"
 	     android:allowMassStorage="true" />
-    
-    <storage android:mountPoint="/storage/sdcard1" 
-	     android:storageDescription="@string/storage_sd_card" 
-	     android:primary="false" 
-	     android:removable="true" 
-	     android:allowMassStorage="true" />
-
-    <storage android:mountPoint="/storage/usbotg"
-            android:storageDescription="@string/storage_usb"
-            android:removable="true" />
 </StorageList>

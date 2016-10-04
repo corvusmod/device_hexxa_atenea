@@ -7,9 +7,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full.mk)
 PRODUCT_DEX_PREOPT_DEFAULT_FLAGS := --compiler-filter=interpret-only
 $(call add-product-dex-preopt-module-config,services,--compiler-filter=space)
 
-$(call inherit-product-if-exists, vendor/elephone/Q/Q-vendor.mk)
+$(call inherit-product-if-exists, vendor/hexxa/atenea/atenea-vendor.mk)
 
-LOCAL_PATH := device/elephone/Q
+LOCAL_PATH := device/hexxa/atenea
 
 PRODUCT_CHARACTERISTICS := default
 
@@ -85,8 +85,6 @@ PRODUCT_COPY_FILES += \
 
 # Permissions
 PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/configs/android.hardware.microphone.xml:system/etc/permissions/android.hardware.microphone.xml \
-	$(LOCAL_PATH)/configs/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml \
 	frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
 	frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
 	frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
@@ -133,11 +131,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	persist.service.debuggable=1 \
 	persist.mtk.wcn.combo.chipid=-1
 
-PRODUCT_NAME := full_Q
-PRODUCT_DEVICE := Q
+PRODUCT_NAME := full_atenea
+PRODUCT_DEVICE := atenea
 
 # Boot animation
-TARGET_SCREEN_HEIGHT := 432
-TARGET_SCREEN_WIDTH := 240
+TARGET_SCREEN_HEIGHT := 360
+TARGET_SCREEN_WIDTH := 360
 
 $(call inherit-product, frameworks/native/build/phone-hdpi-512-dalvik-heap.mk)

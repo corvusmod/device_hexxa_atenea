@@ -89,3 +89,9 @@ ro.setupwizard.mode=DISABLED
 
 gsm.current.phone-type=1
 ro.telephony.default_network=9
+
+#SoftButtons
+qemu.hw.mainkeys=0
+
+#Debug
+persist.logd.logpersistd=logcatd
