@@ -23,42 +23,61 @@ endif
 
 PRODUCT_TAGS += dalvik.gc.type-precise
 
-#PRODUCT_PACKAGES += Torch
-
 PRODUCT_PACKAGES += \
     libxlog
 
 PRODUCT_PACKAGES += \
     lights.mt6572
 
-# audio
+# Audio
 PRODUCT_PACKAGES += \
-    audio.r_submix.default \
-    audio.a2dp.default
-
-PRODUCT_PACKAGES += \
-    audio.primary.mt6572
-
-PRODUCT_PACKAGES += \
-    audio_policy.default
-
-PRODUCT_PACKAGES += \
-    lib_driver_cmd_mt66xx
-
+    audio.primary.mt6592 \
+    audio_policy.default \
+    audio.a2dp.default \
+    audio.usb.default \
+    audio.r_submix.default
 PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
+    $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf \
+    $(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/vendor/etc/audio_policy.conf
-    
+
+# Wifi
+PRODUCT_PACKAGES += \
+    libwpa_client \
+    hostapd \
+    dhcpcd.conf \
+    wpa_supplicant \
+    wpa_supplicant.conf
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/hostapd/hostapd_default.conf:system/etc/hostapd/hostapd_default.conf \
+    $(LOCAL_PATH)/configs/hostapd/hostapd.accept:system/etc/hostapd/hostapd.accept \
+    $(LOCAL_PATH)/configs/hostapd/hostapd.deny:system/etc/hostapd/hostapd.deny
+
 # Bluetooth
 PRODUCT_PACKAGES += \
     libbt-vendor
-    
-# Keylayout
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/mtk-kpd.kl:system/usr/keylayout/mtk-kpd.kl
 
 # GSM
 PRODUCT_PACKAGES += \
-    gsm0710muxd
+    gsm0710muxd \
+    gsm0710muxdmd2
+
+# GPS
+PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/agps_profiles_conf2.xml:system/etc/agps_profiles_conf2.xml
+
+# Keylayout
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/mtk-kpd.kl:system/usr/keylayout/mtk-kpd.kl \
+    $(LOCAL_PATH)/configs/mtk-tpd.kl:system/usr/keylayout/mtk-tpd.kl
+
+# Thermal
+PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/thermal.conf:system/etc/.tp/thermal.conf \
+     $(LOCAL_PATH)/configs/.ht120.mtc:system/etc/.tp/.ht120.mtc \
+     $(LOCAL_PATH)/configs/thermal.off.conf:system/etc/.tp/thermal.off.conf \
+     $(LOCAL_PATH)/configs/thermalstress.cfg:system/etc/.tp/thermalstress.cfg
 
 # Rootdir
 PRODUCT_COPY_FILES += \
@@ -95,27 +114,9 @@ PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
 	frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml
 
-# Wifi
-PRODUCT_PACKAGES += \
-    libwpa_client \
-    hostapd \
-    dhcpcd.conf \
-    wpa_supplicant \
-    wpa_supplicant.conf
-
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/hostapd/hostapd_default.conf:system/etc/hostapd/hostapd_default.conf \
-    $(LOCAL_PATH)/configs/hostapd/hostapd.accept:system/etc/hostapd/hostapd.accept \
-    $(LOCAL_PATH)/configs/hostapd/hostapd.deny:system/etc/hostapd/hostapd.deny
-
 # Healthd
 PRODUCT_PACKAGES += \
     charger_res_images
-
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
-	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/permissions/media_codecs.xml \
-	$(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml
 
 PRODUCT_PROPERTY_OVERRIDES := \
 	ro.mediatek.version.release=ALPS.W10.24.p0 \
@@ -130,6 +131,10 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	persist.service.adb.enable=1 \
 	persist.service.debuggable=1 \
 	persist.mtk.wcn.combo.chipid=-1
+
+# Set default player to AwesomePlayer
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.media.use-awesome=true
 
 PRODUCT_NAME := full_atenea
 PRODUCT_DEVICE := atenea

@@ -2,7 +2,7 @@
 # system.prop for atenea
 #
 service.adb.root=1
-ro.sf.lcd_density=210
+ro.sf.lcd_density=170
 wifi.interface=wlan0
 persist.mtk.aee.aed=on
 persist.radio.fd.counter=15
