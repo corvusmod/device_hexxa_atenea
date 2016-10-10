@@ -2,6 +2,8 @@
 
 ---- Also thanks to all developers that help me building this sources for Atenea/D5/whatever. Blerfont, Jose, Visionary, etc... ---
 
+--- Special thanks to Moyster for audio fixing ---
+
 This is a device tree for Hexxa Atenea or No1 D5 or any other clone of this one, which is based on MT6572 SoC.
 # Build
 
