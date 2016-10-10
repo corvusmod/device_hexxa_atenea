@@ -31,7 +31,7 @@ PRODUCT_PACKAGES += \
 
 # Audio
 PRODUCT_PACKAGES += \
-    audio.primary.mt6592 \
+    audio.primary.mt6572 \
     audio_policy.default \
     audio.a2dp.default \
     audio.usb.default \
