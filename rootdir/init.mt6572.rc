@@ -601,3 +601,8 @@ service BGW /system/xbin/BGW
     group gps system radio
     class main
     oneshot
+
+# SenHub scripts
+    service sensorhub /system/bin/w812a_sensorhub_init.sh
+    class main
+    oneshot	

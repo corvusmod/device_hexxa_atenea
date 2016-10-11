@@ -382,6 +382,7 @@ on post-fs-data
     chmod 0660 /dev/hwmsensor
     chmod 0660 /dev/msensor
     chmod 0660 /dev/gsensor
+    chmod 0660 /dev/alsps
     chmod 0660 /dev/als_ps
     chmod 0660 /dev/gyroscope
     chmod 0660 /sys/devices/platform/msensor/driver/cpsopmode
@@ -391,6 +392,7 @@ on post-fs-data
     chown system system /dev/msensor
     chown system system /dev/gsensor
     chown system system /dev/als_ps
+    chown system system /dev/alsps
     chown system system /dev/gyroscope
 
     #Accdet
