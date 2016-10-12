@@ -8,6 +8,7 @@ PRODUCT_DEX_PREOPT_DEFAULT_FLAGS := --compiler-filter=interpret-only
 $(call add-product-dex-preopt-module-config,services,--compiler-filter=space)
 
 $(call inherit-product-if-exists, vendor/hexxa/atenea/atenea-vendor.mk)
+$(call inherit-product-if-exists, vendor/google/products/gms.mk)
 
 LOCAL_PATH := device/hexxa/atenea
 
