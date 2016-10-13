@@ -1,0 +1,475 @@
+diff --git a/debuggerd/backtrace.cpp b/debuggerd/backtrace.cpp
+index c2a1dbc..71f44aa 100644
+--- a/debuggerd/backtrace.cpp
++++ b/debuggerd/backtrace.cpp
+@@ -62,8 +62,8 @@ static void dump_process_footer(log_t* log, pid_t pid) {
+   _LOG(log, logtype::BACKTRACE, "\n----- end %d -----\n", pid);
+ }
+ 
+-static void dump_thread(
+-    log_t* log, pid_t tid, bool attached, bool* detach_failed, int* total_sleep_time_usec) {
++static void dump_thread(log_t* log, pid_t pid, pid_t tid, bool attached,
++                        bool* detach_failed, int* total_sleep_time_usec) {
+   char path[PATH_MAX];
+   char threadnamebuf[1024];
+   char* threadname = NULL;
+@@ -83,7 +83,7 @@ static void dump_thread(
+ 
+   _LOG(log, logtype::BACKTRACE, "\n\"%s\" sysTid=%d\n", threadname ? threadname : "<unknown>", tid);
+ 
+-  if (!attached && ptrace(PTRACE_ATTACH, tid, 0, 0) < 0) {
++  if (!attached && !ptrace_attach_thread(pid, tid)) {
+     _LOG(log, logtype::BACKTRACE, "Could not attach to thread: %s\n", strerror(errno));
+     return;
+   }
+@@ -110,7 +110,7 @@ void dump_backtrace(int fd, int amfd, pid_t pid, pid_t tid, bool* detach_failed,
+   log.amfd = amfd;
+ 
+   dump_process_header(&log, pid);
+-  dump_thread(&log, tid, true, detach_failed, total_sleep_time_usec);
++  dump_thread(&log, pid, tid, true, detach_failed, total_sleep_time_usec);
+ 
+   char task_path[64];
+   snprintf(task_path, sizeof(task_path), "/proc/%d/task", pid);
+@@ -128,7 +128,7 @@ void dump_backtrace(int fd, int amfd, pid_t pid, pid_t tid, bool* detach_failed,
+         continue;
+       }
+ 
+-      dump_thread(&log, new_tid, false, detach_failed, total_sleep_time_usec);
++      dump_thread(&log, pid, new_tid, false, detach_failed, total_sleep_time_usec);
+     }
+     closedir(d);
+   }
+diff --git a/debuggerd/debuggerd.cpp b/debuggerd/debuggerd.cpp
+index 5eef93f..f5821a3 100644
+--- a/debuggerd/debuggerd.cpp
++++ b/debuggerd/debuggerd.cpp
+@@ -251,15 +251,13 @@ static int read_request(int fd, debugger_request_t* out_request) {
+ 
+   if (msg.action == DEBUGGER_ACTION_CRASH) {
+     // Ensure that the tid reported by the crashing process is valid.
+-    char buf[64];
+-    struct stat s;
+-    enable_etb_trace(cr);
+-    snprintf(buf, sizeof buf, "/proc/%d/task/%d", out_request->pid, out_request->tid);
+-    if (stat(buf, &s)) {
++    // This check needs to happen again after ptracing the requested thread to prevent a race.
++    if (!pid_contains_tid(out_request->pid, out_request->tid)) {
+       ALOGE("tid %d does not exist in pid %d. ignoring debug request\n",
+-          out_request->tid, out_request->pid);
++            out_request->tid, out_request->pid);
+       return -1;
+     }
++    enable_etb_trace(cr);
+   } else if (cr.uid == 0
+             || (cr.uid == AID_SYSTEM && msg.action == DEBUGGER_ACTION_DUMP_BACKTRACE)) {
+     // Only root or system can ask us to attach to any process and dump it explicitly.
+@@ -319,9 +317,32 @@ static void handle_request(int fd) {
+     // ensure that it can run as soon as we call PTRACE_CONT below.
+     // See details in bionic/libc/linker/debugger.c, in function
+     // debugger_signal_handler().
+-    if (ptrace(PTRACE_ATTACH, request.tid, 0, 0)) {
++    if (!ptrace_attach_thread(request.pid, request.tid)) {
+       ALOGE("ptrace attach failed: %s\n", strerror(errno));
+     } else {
++      // DEBUGGER_ACTION_CRASH requests can come from arbitrary processes and the tid field in
++      // the request is sent from the other side. If an attacker can cause a process to be
++      // spawned with the pid of their process, they could trick debuggerd into dumping that
++      // process by exiting after sending the request. Validate the trusted request.uid/gid
++      // to defend against this.
++      if (request.action == DEBUGGER_ACTION_CRASH) {
++        pid_t pid;
++        uid_t uid;
++        gid_t gid;
++        if (get_process_info(request.tid, &pid, &uid, &gid) != 0) {
++          ALOGE("debuggerd: failed to get process info for tid '%d'", request.tid);
++          exit(1);
++        }
++
++        if (pid != request.pid || uid != request.uid || gid != request.gid) {
++          ALOGE(
++            "debuggerd: attached task %d does not match request: "
++            "expected pid=%d,uid=%d,gid=%d, actual pid=%d,uid=%d,gid=%d",
++            request.tid, request.pid, request.uid, request.gid, pid, uid, gid);
++          exit(1);
++        }
++      }
++
+       bool detach_failed = false;
+       bool tid_unresponsive = false;
+       bool attach_gdb = should_attach_gdb(&request);
+diff --git a/debuggerd/tombstone.cpp b/debuggerd/tombstone.cpp
+index 4234fae..812f90c 100644
+--- a/debuggerd/tombstone.cpp
++++ b/debuggerd/tombstone.cpp
+@@ -744,26 +744,7 @@ char* engrave_tombstone(pid_t pid, pid_t tid, int signal, int original_si_code,
+   log.crashed_tid = tid;
+   int fd = -1;
+ 
+-  if ((mkdir(TOMBSTONE_DIR, 0755) == -1) && (errno != EEXIST)) {
+-    _LOG(&log, logtype::ERROR, "failed to create %s: %s\n", TOMBSTONE_DIR, strerror(errno));
+-  }
+-  if(((fd = open(TOMBSTONE_DIR, O_NOFOLLOW|O_RDONLY)) != -1) ||((fd = open(TOMBSTONE_DIR, O_NOFOLLOW|O_WRONLY)) != -1)){
+-    if (fchown(fd, AID_SYSTEM, AID_SYSTEM) < 0){
+-       _LOG(&log, logtype::ERROR, "failed to change ownership of %s: %s\n", TOMBSTONE_DIR, strerror(errno));
+-       close(fd);
+-       return NULL;
+-    }
+-    close(fd);
+-  } else {
+-    _LOG(&log, logtype::ERROR, "failed to open %s: %s\n", TOMBSTONE_DIR, strerror(errno));
+-    return NULL;
+-  }
+-  char* path = NULL;
+-  if (selinux_android_restorecon(TOMBSTONE_DIR, 0) == 0) {
+-    path = find_and_open_tombstone(&fd);
+-  } else {
+-    _LOG(&log, logtype::ERROR, "Failed to restore security context, not writing tombstone.\n");
+-  }
++  char* path = find_and_open_tombstone(&fd);
+ 
+   if (fd < 0) {
+     _LOG(&log, logtype::ERROR, "Skipping tombstone write, nothing to do.\n");
+diff --git a/debuggerd/utility.cpp b/debuggerd/utility.cpp
+index 2baf9de..12df1e6 100644
+--- a/debuggerd/utility.cpp
++++ b/debuggerd/utility.cpp
+@@ -20,6 +20,7 @@
+ 
+ #include <errno.h>
+ #include <signal.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ #include <sys/ptrace.h>
+@@ -204,3 +205,31 @@ void dump_memory(log_t* log, pid_t tid, uintptr_t addr) {
+         _LOG(log, logtype::MEMORY, "    %s %s\n", code_buffer, ascii_buffer);
+     }
+ }
++
++bool pid_contains_tid(pid_t pid, pid_t tid) {
++  char task_path[PATH_MAX];
++  if (snprintf(task_path, PATH_MAX, "/proc/%d/task/%d", pid, tid) >= PATH_MAX) {
++    ALOGE("debuggerd: task path overflow (pid = %d, tid = %d)\n", pid, tid);
++    exit(1);
++  }
++
++  return access(task_path, F_OK) == 0;
++}
++
++// Attach to a thread, and verify that it's still a member of the given process
++bool ptrace_attach_thread(pid_t pid, pid_t tid) {
++  if (ptrace(PTRACE_ATTACH, tid, 0, 0) != 0) {
++    return false;
++  }
++
++  // Make sure that the task we attached to is actually part of the pid we're dumping.
++  if (!pid_contains_tid(pid, tid)) {
++    if (ptrace(PTRACE_DETACH, tid, 0, 0) != 0) {
++      ALOGE("debuggerd: failed to detach from thread '%d'", tid);
++      exit(1);
++    }
++    return false;
++  }
++
++  return true;
++}
+diff --git a/debuggerd/utility.h b/debuggerd/utility.h
+index 58a882c..9f46982 100644
+--- a/debuggerd/utility.h
++++ b/debuggerd/utility.h
+@@ -75,4 +75,9 @@ int wait_for_sigstop(pid_t, int*, bool*);
+ 
+ void dump_memory(log_t* log, pid_t tid, uintptr_t addr);
+ 
++bool pid_contains_tid(pid_t pid, pid_t tid);
++
++// Attach to a thread, and verify that it's still a member of the given process
++bool ptrace_attach_thread(pid_t pid, pid_t tid);
++
+ #endif // _DEBUGGERD_UTILITY_H
+diff --git a/include/utils/Unicode.h b/include/utils/Unicode.h
+index 5b98de2..f8f0aee 100644
+--- a/include/utils/Unicode.h
++++ b/include/utils/Unicode.h
+@@ -93,7 +93,7 @@ ssize_t utf32_to_utf8_length(const char32_t *src, size_t src_len);
+  * "dst" becomes \xE3\x81\x82\xE3\x81\x84
+  * (note that "dst" is NOT null-terminated, like strncpy)
+  */
+-void utf32_to_utf8(const char32_t* src, size_t src_len, char* dst);
++void utf32_to_utf8(const char32_t* src, size_t src_len, char* dst, size_t dst_len);
+ 
+ /**
+  * Returns the unicode value at "index".
+@@ -115,7 +115,7 @@ ssize_t utf16_to_utf8_length(const char16_t *src, size_t src_len);
+  * enough to fit the UTF-16 as measured by utf16_to_utf8_length with an added
+  * NULL terminator.
+  */
+-void utf16_to_utf8(const char16_t* src, size_t src_len, char* dst);
++void utf16_to_utf8(const char16_t* src, size_t src_len, char* dst, size_t dst_len);
+ 
+ /**
+  * Returns the length of "src" when "src" is valid UTF-8 string.
+diff --git a/init/init.c b/init/init.c
+index 1cce8d8..0d03483 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -1010,7 +1010,11 @@ static void selinux_initialize(void)
+     }
+ 
+     selinux_init_all_handles();
++#ifdef MTK_HARDWARE
++    bool is_enforcing = false; // Always making selinux permissive for MTK's rild
++#else
+     bool is_enforcing = selinux_is_enforcing();
++#endif
+     INFO("SELinux: security_setenforce(%d)\n", is_enforcing);
+     security_setenforce(is_enforcing);
+ }
+diff --git a/libbacktrace/BacktraceImpl.cpp b/libbacktrace/BacktraceImpl.cpp
+index 405b042..4693600 100644
+--- a/libbacktrace/BacktraceImpl.cpp
++++ b/libbacktrace/BacktraceImpl.cpp
+@@ -60,24 +60,8 @@ bool Backtrace::Unwind(size_t num_ignore_frames, ucontext_t* ucontext) {
+   return impl_->Unwind(num_ignore_frames, ucontext);
+ }
+ 
+-extern "C" char* __cxa_demangle(const char* mangled, char* buf, size_t* len,
+-                                int* status);
+-
+ std::string Backtrace::GetFunctionName(uintptr_t pc, uintptr_t* offset) {
+   std::string func_name = impl_->GetFunctionNameRaw(pc, offset);
+-  if (!func_name.empty()) {
+-#if defined(__APPLE__)
+-    // Mac OS' __cxa_demangle demangles "f" as "float"; last tested on 10.7.
+-    if (func_name[0] != '_') {
+-      return func_name;
+-    }
+-#endif
+-    char* name = __cxa_demangle(func_name.c_str(), 0, 0, 0);
+-    if (name) {
+-      func_name = name;
+-      free(name);
+-    }
+-  }
+   return func_name;
+ }
+ 
+diff --git a/libnetutils/ifc_utils.c b/libnetutils/ifc_utils.c
+index e6e9bcd..cf426eb 100644
+--- a/libnetutils/ifc_utils.c
++++ b/libnetutils/ifc_utils.c
+@@ -36,6 +36,7 @@
+ #include <linux/ipv6_route.h>
+ #include <linux/rtnetlink.h>
+ #include <linux/sockios.h>
++#include <linux/un.h>
+ 
+ #include "netutils/ifc.h"
+ 
+diff --git a/libutils/Android.mk b/libutils/Android.mk
+index bcfb9ab..d8cd8ef 100644
+--- a/libutils/Android.mk
++++ b/libutils/Android.mk
+@@ -91,7 +91,7 @@ LOCAL_CFLAGS += -DALIGN_DOUBLE
+ endif
+ LOCAL_CFLAGS += -Werror
+ 
+-ifeq ($(TARGET_BOARD_PLATFORM),mt6592)
++ifeq ($(BOARD_HAS_MTK_HARDWARE),true)  
+ LOCAL_SRC_FILES += MediatekHacks.cpp
+ endif
+ 
+diff --git a/libutils/String8.cpp b/libutils/String8.cpp
+index ad65fdb..75dfa29 100644
+--- a/libutils/String8.cpp
++++ b/libutils/String8.cpp
+@@ -102,20 +102,21 @@ static char* allocFromUTF16(const char16_t* in, size_t len)
+ {
+     if (len == 0) return getEmptyString();
+ 
+-    const ssize_t bytes = utf16_to_utf8_length(in, len);
+-    if (bytes < 0) {
++     // Allow for closing '\0'
++    const ssize_t resultStrLen = utf16_to_utf8_length(in, len) + 1;
++    if (resultStrLen < 1) {
+         return getEmptyString();
+     }
+ 
+-    SharedBuffer* buf = SharedBuffer::alloc(bytes+1);
++    SharedBuffer* buf = SharedBuffer::alloc(resultStrLen);
+     ALOG_ASSERT(buf, "Unable to allocate shared buffer");
+     if (!buf) {
+         return getEmptyString();
+     }
+ 
+-    char* str = (char*)buf->data();
+-    utf16_to_utf8(in, len, str);
+-    return str;
++    char* resultStr = (char*)buf->data();
++    utf16_to_utf8(in, len, resultStr, resultStrLen);
++    return resultStr;
+ }
+ 
+ static char* allocFromUTF32(const char32_t* in, size_t len)
+@@ -124,21 +125,21 @@ static char* allocFromUTF32(const char32_t* in, size_t len)
+         return getEmptyString();
+     }
+ 
+-    const ssize_t bytes = utf32_to_utf8_length(in, len);
+-    if (bytes < 0) {
++    const ssize_t resultStrLen = utf32_to_utf8_length(in, len) + 1;
++    if (resultStrLen < 1) {
+         return getEmptyString();
+     }
+ 
+-    SharedBuffer* buf = SharedBuffer::alloc(bytes+1);
++    SharedBuffer* buf = SharedBuffer::alloc(resultStrLen);
+     ALOG_ASSERT(buf, "Unable to allocate shared buffer");
+     if (!buf) {
+         return getEmptyString();
+     }
+ 
+-    char* str = (char*) buf->data();
+-    utf32_to_utf8(in, len, str);
++    char* resultStr = (char*) buf->data();
++    utf32_to_utf8(in, len, resultStr, resultStrLen);
+ 
+-    return str;
++    return resultStr;
+ }
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/libutils/Unicode.cpp b/libutils/Unicode.cpp
+index 378d2a7..f5e28d4 100644
+--- a/libutils/Unicode.cpp
++++ b/libutils/Unicode.cpp
+@@ -14,6 +14,7 @@
+  * limitations under the License.
+  */
+ 
++#include <log/log.h>
+ #include <utils/Unicode.h>
+ 
+ #include <stddef.h>
+@@ -188,7 +189,7 @@ ssize_t utf32_to_utf8_length(const char32_t *src, size_t src_len)
+     return ret;
+ }
+ 
+-void utf32_to_utf8(const char32_t* src, size_t src_len, char* dst)
++void utf32_to_utf8(const char32_t* src, size_t src_len, char* dst, size_t dst_len)
+ {
+     if (src == NULL || src_len == 0 || dst == NULL) {
+         return;
+@@ -199,9 +200,12 @@ void utf32_to_utf8(const char32_t* src, size_t src_len, char* dst)
+     char *cur = dst;
+     while (cur_utf32 < end_utf32) {
+         size_t len = utf32_codepoint_utf8_length(*cur_utf32);
++        LOG_ALWAYS_FATAL_IF(dst_len < len, "%zu < %zu", dst_len, len);
+         utf32_codepoint_to_utf8((uint8_t *)cur, *cur_utf32++, len);
+         cur += len;
++        dst_len -= len;
+     }
++    LOG_ALWAYS_FATAL_IF(dst_len < 1, "dst_len < 1: %zu < 1", dst_len);
+     *cur = '\0';
+ }
+ 
+@@ -330,7 +334,7 @@ int strzcmp16_h_n(const char16_t *s1H, size_t n1, const char16_t *s2N, size_t n2
+            : 0);
+ }
+ 
+-void utf16_to_utf8(const char16_t* src, size_t src_len, char* dst)
++void utf16_to_utf8(const char16_t* src, size_t src_len, char* dst, size_t dst_len)
+ {
+     if (src == NULL || src_len == 0 || dst == NULL) {
+         return;
+@@ -351,9 +355,12 @@ void utf16_to_utf8(const char16_t* src, size_t src_len, char* dst)
+             utf32 = (char32_t) *cur_utf16++;
+         }
+         const size_t len = utf32_codepoint_utf8_length(utf32);
++        LOG_ALWAYS_FATAL_IF(dst_len < len, "%zu < %zu", dst_len, len);
+         utf32_codepoint_to_utf8((uint8_t*)cur, utf32, len);
+         cur += len;
++        dst_len -= len;
+     }
++    LOG_ALWAYS_FATAL_IF(dst_len < 1, "%zu < 1", dst_len);
+     *cur = '\0';
+ }
+ 
+@@ -414,10 +421,10 @@ ssize_t utf16_to_utf8_length(const char16_t *src, size_t src_len)
+     const char16_t* const end = src + src_len;
+     while (src < end) {
+         if ((*src & 0xFC00) == 0xD800 && (src + 1) < end
+-                && (*++src & 0xFC00) == 0xDC00) {
++                && (*(src + 1) & 0xFC00) == 0xDC00) {
+             // surrogate pairs are always 4 bytes.
+             ret += 4;
+-            src++;
++            src += 2;
+         } else {
+             ret += utf32_codepoint_utf8_length((char32_t) *src++);
+         }
+diff --git a/libutils/tests/String8_test.cpp b/libutils/tests/String8_test.cpp
+index c42c68d..7394163 100644
+--- a/libutils/tests/String8_test.cpp
++++ b/libutils/tests/String8_test.cpp
+@@ -17,6 +17,7 @@
+ #define LOG_TAG "String8_test"
+ #include <utils/Log.h>
+ #include <utils/String8.h>
++#include <utils/String16.h>
+ 
+ #include <gtest/gtest.h>
+ 
+@@ -72,4 +73,23 @@ TEST_F(String8Test, OperatorPlusEquals) {
+     EXPECT_STREQ(src3, " Verify me.");
+ }
+ 
++// http://b/29250543
++TEST_F(String8Test, CorrectInvalidSurrogate) {
++    // d841d8 is an invalid start for a surrogate pair. Make sure this is handled by ignoring the
++    // first character in the pair and handling the rest correctly.
++    char16_t char16_arr[] = { 0xd841, 0xd841, 0xdc41, 0x0000 };
++    String16 string16(char16_arr);
++    String8 string8(string16);
++
++    EXPECT_EQ(4U, string8.length());
++}
++
++TEST_F(String8Test, CheckUtf32Conversion) {
++    // Since bound checks were added, check the conversion can be done without fatal errors.
++    // The utf8 lengths of these are chars are 1 + 2 + 3 + 4 = 10.
++    const char32_t string32[] = { 0x0000007f, 0x000007ff, 0x0000911, 0x0010fffe, 0 };
++    String8 string8(string32);
++    EXPECT_EQ(10U, string8.length());
++}
++
+ }
+diff --git a/toolbox/lsof.c b/toolbox/lsof.c
+index bee981d..655806d 100644
+--- a/toolbox/lsof.c
++++ b/toolbox/lsof.c
+@@ -99,10 +99,11 @@ out:
+ static void print_maps(struct pid_info_t* info)
+ {
+     FILE *maps;
++
+     size_t offset;
+     char device[10];
+     long int inode;
+-    char file[PATH_MAX];
++    char file[1024];
+ 
+     strlcat(info->path, "maps", sizeof(info->path));
+ 
+@@ -110,8 +111,8 @@ static void print_maps(struct pid_info_t* info)
+     if (!maps)
+         goto out;
+ 
+-    while (fscanf(maps, "%*x-%*x %*s %zx %s %ld %s\n", &offset, device, &inode,
+-            file) == 4) {
++    while (fscanf(maps, "%*x-%*x %*s %zx %5s %ld %1023s\n",
++                  &offset, device, &inode, file) == 4) {
+         // We don't care about non-file maps
+         if (inode == 0 || !strcmp(device, "00:00"))
+             continue;
