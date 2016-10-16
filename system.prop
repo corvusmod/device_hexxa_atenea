@@ -4,7 +4,7 @@
 service.adb.root=1
 ro.sf.lcd_density=170
 wifi.interface=wlan0
-persist.mtk.aee.aed=on
+persist.mtk.aee.aed=off
 persist.radio.fd.counter=15
 persist.radio.fd.off.counter=5
 persist.radio.fd.r8.counter=15
